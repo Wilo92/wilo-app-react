@@ -14,7 +14,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 // Clona la rama 'main' del repositorio especificado
-                // ⚠️ Nota: hay un error en la URL (https://https://), debería corregirse
+              
                 git branch: 'main', url: 'https://github.com/Wilo92/wilo-app-react.git'
             }
         }
@@ -61,11 +61,11 @@ pipeline {
     post {
         success {
             // Mensaje si el pipeline fue exitoso
-            echo '¡Pipeline ejecutado con éxito!'
+            echo '¡Este Pipeline fue ejecutado con éxito muy bien!'
         }
         failure {
             // Mensaje si alguna etapa falló
-            echo 'Pipeline fallido. Revisar logs.'
+            echo 'El Pipeline ha fallado. vuelve a intentarlo.'
         }
     }
 }
