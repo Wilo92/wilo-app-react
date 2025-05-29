@@ -47,9 +47,9 @@ function App() {
           </span>
         </div>
         <div style={{ display: 'flex', gap: '20px' }}>
-          <a href="#" style={{ color: 'white', textDecoration: 'none' }}>HOME</a>
-          <a href="#" style={{ color: 'white', textDecoration: 'none' }}>ABOUT US</a>
-          <a href="#" style={{ color: 'white', textDecoration: 'none' }}>CONTACT</a>
+          <a href="/public" style={{ color: 'white', textDecoration: 'none' }}>HOME</a>
+          <a href="/public" style={{ color: 'white', textDecoration: 'none' }}>ABOUT US</a>
+          <a href="/public" style={{ color: 'white', textDecoration: 'none' }}>CONTACT</a>
         </div>
       </nav>
 
