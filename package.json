@@ -16,7 +16,9 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
+    "test": "jest",
+    "test:chrome": "jest --config=jest.chrome.config.js",
+    "test:firefox": "jest --config=jest.firefox.config.js",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
