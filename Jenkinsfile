@@ -61,7 +61,7 @@ pipeline {
             // Envía un correo con el resultado del pipeline a la dirección especificada
             // Requiere que el servidor SMTP esté configurado en Jenkins
             mail(
-                to: 'wilmerrestrepoo@hotmail.com',
+                to: 'wilmer.restrepo@contraloriarisaralda.gov.co',
                 subject: "Build Status: ${currentBuild.currentResult}",
                 body: "Job: ${env.JOB_NAME}\nEstado: ${currentBuild.currentResult}\nURL: ${env.BUILD_URL}"
             )
