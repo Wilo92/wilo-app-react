@@ -3,7 +3,7 @@ pipeline {
     agent any
 
     tools {
-        // Se usará Node.js versión 'Node_24' 
+        // Se usará Node.js versión 'Node_24' (debe estar configurado en Jenkins)
         nodejs 'Node_24'
     }
 
@@ -13,8 +13,7 @@ pipeline {
         // ===============================
         stage('Checkout') {
             steps {
-                // Clona la rama 'main' del repositorio especificado
-              
+                // Clona la rama 'main' del repositorio de GitHub
                 git branch: 'main', url: 'https://github.com/Wilo92/wilo-app-react.git'
             }
         }
@@ -24,10 +23,10 @@ pipeline {
         // ==========================================
         stage('Build') {
             steps {
-                // Instala todas las dependencias del proyecto desde package.json
+                // Instala todas las dependencias definidas en package.json
                 sh 'npm install'
 
-                // Ejecuta el comando de compilación de la aplicación React
+                // Compila la aplicación React
                 sh 'npm run build'
             }
         }
@@ -37,18 +36,17 @@ pipeline {
         // =====================================
         stage('Unit Tests') {
             steps {
-                // Ejecuta pruebas unitarias con Jest sin modo interactivo
-                // Redirige la salida al archivo 'test-output.txt'
-                // El '|| true' evita que el pipeline falle si alguna prueba falla
+                // Ejecuta pruebas con Jest en modo no interactivo
+                // Redirige la salida a un archivo para su posterior revisión
+                // '|| true' evita que el pipeline falle aunque las pruebas fallen
                 sh 'npm test -- --watchAll=false --silent > test-output.txt || true'
 
-                // Muestra el contenido del archivo de resultados de pruebas en consola
+                // Muestra en consola el resultado de las pruebas
                 sh 'cat test-output.txt'
             }
             post {
                 always {
-                    // Guarda el archivo de resultados de pruebas como artefacto
-                    // Permite que esté disponible para descarga o análisis posterior
+                    // Guarda el archivo de pruebas como artefacto del build
                     archiveArtifacts artifacts: 'test-output.txt', allowEmptyArchive: true
                 }
             }
@@ -56,16 +54,17 @@ pipeline {
     }
 
     // ========================
-    // Acciones al finalizar
+    // Acciones al finalizar el pipeline
     // ========================
     post {
-        success {
-            // Mensaje si el pipeline fue exitoso
-            echo '¡Este Pipeline fue ejecutado con éxito muy bien!'
-        }
-        failure {
-            // Mensaje si alguna etapa falló
-            echo 'El Pipeline ha fallado. vuelve a intentarlo.'
+        always {
+            // Envía un correo con el resultado del pipeline a la dirección especificada
+            // Requiere que el servidor SMTP esté configurado en Jenkins
+            mail(
+                to: 'wilmerrestrepoo@hotmail.com',
+                subject: "Build Status: ${currentBuild.currentResult}",
+                body: "Job: ${env.JOB_NAME}\nEstado: ${currentBuild.currentResult}\nURL: ${env.BUILD_URL}"
+            )
         }
     }
 }
