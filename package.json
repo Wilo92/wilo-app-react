@@ -40,6 +40,8 @@
     ]
   },
   "devDependencies": {
-    "jest-html-reporter": "^4.1.0"
+    "jest-html-reporter": "^4.1.0",
+    "jest-puppeteer": "^11.0.0",
+    "puppeteer": "^24.9.0"
   }
 }
