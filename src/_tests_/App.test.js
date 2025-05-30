@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import App from '../src/App';
+import App from '../App';
 
 describe('Componente App', () => {
   test('muestra una alerta al hacer clic en el botón', () => {
@@ -12,7 +12,7 @@ describe('Componente App', () => {
 
     // Busca el botón por su texto
     const boton = screen.getByText('¡Personal Web site!');
-
+        
     // Simula un clic en el botón
     fireEvent.click(boton);
 
