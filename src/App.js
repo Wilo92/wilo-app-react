@@ -17,7 +17,7 @@ function App() {
   }, []);
 
   const handleClick = () => {
-    alert('¡Personal W site!');
+    alert('¡Personal Web site!');
   };
 
   return (
