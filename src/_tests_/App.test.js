@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import App from './App';
+import App from '../App';
 
 describe('Componente App', () => {
   test('muestra una alerta al hacer clic en el botón', () => {
