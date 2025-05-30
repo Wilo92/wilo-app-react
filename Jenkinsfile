@@ -1,58 +1,31 @@
 pipeline {
+    // El pipeline puede ejecutarse en cualquier agente disponible de Jenkins
     agent any
 
+    tools {
+        // Se usará Node.js versión 'Node_24' (debe estar configurado en Jenkins)
+        nodejs 'Node_24'
+    }
+
     stages {
+        // Etapa para clonar el repositorio desde GitHub
         stage('Checkout') {
             steps {
-                checkout scm
+                git branch: 'main', url: 'https://github.com/Wilo92/wilo-app-react.git'
             }
         }
 
-        stage('Install') {
-            steps {
-                sh 'npm install'
-            }
-        }
-
+        // Etapa para instalar dependencias y construir la aplicación React
         stage('Build') {
             steps {
-                sh 'npm run build'
+                sh 'npm install'        // Instala dependencias
+                sh 'npm run build'      // Construye la app
             }
         }
 
-        stage('Test') {
-            steps {
-                sh 'npm test -- --watchAll=false'
-            }
-        }
-    }
-
-    post {
-        always {
-            // Publicar reportes HTML (opcional)
-            publishHTML target: [
-                allowMissing: true,
-                alwaysLinkToLastBuild: true,
-                keepAll: true,
-                reportDir: 'prod',
-                reportFiles: 'index.html',
-                reportName: 'Demo Deploy'
-            ]
-
-            // Notificación por email ante fallos
-            emailext(
-                subject: "Pipeline ${currentBuild.result}: ${env.JOB_NAME}",
-                body: """
-                    <h2>Resultado: ${currentBuild.result}</h2>
-                    <p><b>URL del Build:</b> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
-                    <p><b>Consola:</b> <a href="${env.BUILD_URL}console">Ver logs</a></p>
-                """,
-                to: 'wilmer.restrepo@contraloriarisaralda.gov.co',
-                mimeType: 'text/html'
-            )
-
-            // Limpiar workspace
-            cleanWs()
-        }
-    }
-}
+        // Etapa que ejecuta pruebas en paralelo en dos navegadores distintos
+        stage('Parallel Browser Tests') {
+            parallel {
+                // Pruebas ejecutadas en Google Chrome
+                stage('Test on Chrome') {
+                    steps {
