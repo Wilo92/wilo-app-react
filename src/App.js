@@ -6,7 +6,7 @@ const images = [
   "https://www.ucp.edu.co/wp-content/uploads/2025/01/Logo_50_ucp-1.webp"
 ];
 
-function App() {
+/*function App() {
   const [currentImage, setCurrentImage] = useState(0);
 
   useEffect(() => {
