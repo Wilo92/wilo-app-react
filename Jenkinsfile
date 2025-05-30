@@ -1,70 +1,58 @@
 pipeline {
-    // El pipeline puede ejecutarse en cualquier agente disponible de Jenkins
     agent any
 
-    tools {
-        // Se usará Node.js versión 'Node_24' (debe estar configurado en Jenkins)
-        nodejs 'Node_24'
-    }
-
     stages {
-        // ===============================
-        // Etapa 1: Clonar el repositorio
-        // ===============================
         stage('Checkout') {
             steps {
-                // Clona la rama 'main' del repositorio de GitHub
-                git branch: 'main', url: 'https://github.com/Wilo92/wilo-app-react.git'
+                checkout scm
             }
         }
 
-        // ==========================================
-        // Etapa 2: Instalar dependencias y compilar
-        // ==========================================
+        stage('Install') {
+            steps {
+                sh 'npm install'
+            }
+        }
+
         stage('Build') {
             steps {
-                // Instala todas las dependencias definidas en package.json
-                sh 'npm install'
-
-                // Compila la aplicación React
                 sh 'npm run build'
             }
         }
 
-        // =====================================
-        // Etapa 3: Ejecutar pruebas unitarias
-        // =====================================
-        stage('Unit Tests') {
+        stage('Test') {
             steps {
-                // Ejecuta pruebas con Jest en modo no interactivo
-                // Redirige la salida a un archivo para su posterior revisión
-                // '|| true' evita que el pipeline falle aunque las pruebas fallen
-                sh 'npm test -- --watchAll=false --silent > test-output.txt || true'
-
-                // Muestra en consola el resultado de las pruebas
-                sh 'cat test-output.txt'
-            }
-            post {
-                always {
-                    // Guarda el archivo de pruebas como artefacto del build
-                    archiveArtifacts artifacts: 'test-output.txt', allowEmptyArchive: true
-                }
+                sh 'npm test -- --watchAll=false'
             }
         }
     }
 
-    // ========================
-    // Acciones al finalizar el pipeline
-    // ========================
     post {
         always {
-            // Envía un correo con el resultado del pipeline a la dirección especificada
-            // Requiere que el servidor SMTP esté configurado en Jenkins
-            mail(
+            // Publicar reportes HTML (opcional)
+            publishHTML target: [
+                allowMissing: true,
+                alwaysLinkToLastBuild: true,
+                keepAll: true,
+                reportDir: 'prod',
+                reportFiles: 'index.html',
+                reportName: 'Demo Deploy'
+            ]
+
+            // Notificación por email ante fallos
+            emailext(
+                subject: "Pipeline ${currentBuild.result}: ${env.JOB_NAME}",
+                body: """
+                    <h2>Resultado: ${currentBuild.result}</h2>
+                    <p><b>URL del Build:</b> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
+                    <p><b>Consola:</b> <a href="${env.BUILD_URL}console">Ver logs</a></p>
+                """,
                 to: 'wilmer.restrepo@contraloriarisaralda.gov.co',
-                subject: "Build Status: ${currentBuild.currentResult}",
-                body: "Job: ${env.JOB_NAME}\nEstado: ${currentBuild.currentResult}\nURL: ${env.BUILD_URL}"
+                mimeType: 'text/html'
             )
+
+            // Limpiar workspace
+            cleanWs()
         }
     }
 }
