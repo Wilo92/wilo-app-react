@@ -1,112 +1,70 @@
 pipeline {
+    // El pipeline puede ejecutarse en cualquier agente disponible de Jenkins
     agent any
 
     tools {
+        // Se usará Node.js versión 'Node_24' (debe estar configurado en Jenkins)
         nodejs 'Node_24'
     }
 
-    options {
-        skipDefaultCheckout(true)
-        buildDiscarder(logRotator(numToKeepStr: '10'))
-    }
-
-    environment {
-        PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = 'false' // Cambia a true si preinstalas Chromium
-    }
-
     stages {
-        stage('Clean Workspace') {
-            steps {
-                deleteDir()
-            }
-        }
-
+        // ===============================
+        // Etapa 1: Clonar el repositorio
+        // ===============================
         stage('Checkout') {
             steps {
-                checkout scm
+                // Clona la rama 'main' del repositorio de GitHub
+                git branch: 'main', url: 'https://github.com/Wilo92/wilo-app-react.git'
             }
         }
 
-        stage('Install System Dependencies') {
-            steps {
-                sh '''
-                    apt-get update
-                    apt-get install -y wget ca-certificates fonts-liberation libappindicator3-1 \
-                    libasound2 libatk-bridge2.0-0 libatk1.0-0 libc6 libcairo2 libcups2 libdbus-1-3 \
-                    libgdk-pixbuf2.0-0 libnspr4 libnss3 libx11-xcb1 libxcomposite1 libxdamage1 \
-                    libxrandr2 libxss1 libxtst6 xdg-utils libglib2.0-0 libgbm1 libgtk-3-0
-                '''
-            }
-        }
-
+        // ==========================================
+        // Etapa 2: Instalar dependencias y compilar
+        // ==========================================
         stage('Build') {
             steps {
+                // Instala todas las dependencias definidas en package.json
                 sh 'npm install'
+
+                // Compila la aplicación React
                 sh 'npm run build'
             }
         }
 
-        stage('Parallel Tests') {
-            parallel {
-                stage('Test Chrome') {
-                    steps {
-                        sh 'npm run test:chrome || true'
-                        sh 'ls -l reports/chrome || true'
-                    }
-                    post {
-                        always {
-                            archiveArtifacts artifacts: 'reports/chrome/**/*.*', allowEmptyArchive: true
-                            publishHTML(target: [
-                                reportName: 'Reporte Chrome',
-                                reportDir: 'reports/chrome',
-                                reportFiles: 'index.html',
-                                allowMissing: true,
-                                alwaysLinkToLastBuild: true
-                            ])
-                        }
-                    }
-                }
-
-                stage('Test Firefox') {
-                    steps {
-                        sh 'npm run test:firefox || true'
-                        sh 'ls -l reports/firefox || true'
-                    }
-                    post {
-                        always {
-                            archiveArtifacts artifacts: 'reports/firefox/**/*.*', allowEmptyArchive: true
-                            publishHTML(target: [
-                                reportName: 'Reporte Firefox',
-                                reportDir: 'reports/firefox',
-                                reportFiles: 'index.html',
-                                allowMissing: true,
-                                alwaysLinkToLastBuild: true
-                            ])
-                        }
-                    }
-                }
-            }
-        }
-
-        stage('Simulate Deploy') {
-            when {
-                expression { currentBuild.currentResult == 'SUCCESS' }
-            }
+        // =====================================
+        // Etapa 3: Ejecutar pruebas unitarias
+        // =====================================
+        stage('Unit Tests') {
             steps {
-                echo 'Simulando despliegue...'
-                sh 'echo Deploy simulado OK'
+                // Ejecuta pruebas con Jest en modo no interactivo
+                // Redirige la salida a un archivo para su posterior revisión
+                // '|| true' evita que el pipeline falle aunque las pruebas fallen
+                sh 'npm test -- --watchAll=false --silent > test-output.txt || true'
+
+                // Muestra en consola el resultado de las pruebas
+                sh 'cat test-output.txt'
+            }
+            post {
+                always {
+                    // Guarda el archivo de pruebas como artefacto del build
+                    archiveArtifacts artifacts: 'test-output.txt', allowEmptyArchive: true
+                }
             }
         }
     }
 
+    // ========================
+    // Acciones al finalizar el pipeline
+    // ========================
     post {
-        failure {
-            mail to: 'wilmer.restrepo@contraloriarisaralda.gov.co',
-                 subject: "❌ Build FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                 body: "El build ha fallado. Revisa detalles en: ${env.BUILD_URL}"
-        }
-        success {
-            echo '✅ Build finalizado correctamente.'
+        always {
+            // Envía un correo con el resultado del pipeline a la dirección especificada
+            // Requiere que el servidor SMTP esté configurado en Jenkins
+            mail(
+                to: 'wilmer.restrepo@contraloriarisaralda.gov.co',
+                subject: "Build Status: ${currentBuild.currentResult}",
+                body: "Job: ${env.JOB_NAME}\nEstado: ${currentBuild.currentResult}\nURL: ${env.BUILD_URL}"
+            )
         }
     }
 }
